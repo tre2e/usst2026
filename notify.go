@@ -26,11 +26,21 @@ func NewNotifier(cfg *Config) *Notifier {
 	}
 }
 
-func (n *Notifier) SendRollcallAlert(courseName, teacher, status, detail string) error {
-	subject := fmt.Sprintf("【签到通知】%s — %s", courseName, status)
+func (n *Notifier) SendRollcallAlert(rc Rollcall) error {
+	var action string
+	if rc.StudentStatus == "absent" && !rc.IsExpired {
+		action = "请尽快签到"
+	} else if rc.StudentStatus == "absent" && rc.IsExpired {
+		action = "已过期"
+	} else {
+		action = "已签到"
+	}
+
+	subject := fmt.Sprintf("【签到】%s — %s", rc.CourseTitle, rc.RollcallStatus)
 	body := fmt.Sprintf(
-		"课程: %s\r\n教师: %s\r\n状态: %s\r\n详情: %s\r\n",
-		courseName, teacher, status, detail,
+		"课程: %s\r\n教师: %s\r\n标题: %s\r\n时间: %s\r\n类型: %s\r\n签到状态: %s\r\n你的状态: %s\r\n操作: %s\r\n",
+		rc.CourseTitle, rc.CreatedByName, rc.Title, rc.RollcallTime,
+		rc.Type, rc.RollcallStatus, rc.StudentStatus, action,
 	)
 	return n.send(subject, body)
 }
